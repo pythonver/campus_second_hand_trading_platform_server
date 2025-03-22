@@ -31,7 +31,7 @@
     </scm>
 
     <modules>
-        <module>eureka-serverdemo</module>
+        <module>eureka-server</module>
         <module>user-server</module>
         <module>order-server</module>
         <module>api-gateway</module>
