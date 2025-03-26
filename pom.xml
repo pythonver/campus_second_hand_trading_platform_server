@@ -35,6 +35,8 @@
         <module>user-server</module>
         <module>order-server</module>
         <module>api-gateway</module>
+        <module>goods-server</module>
+        <module>security-demo</module>
     </modules>
 
     <properties>

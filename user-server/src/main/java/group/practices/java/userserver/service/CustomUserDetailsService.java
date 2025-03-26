@@ -1,5 +1,6 @@
 package group.practices.java.userserver.service;
 
+
 import group.practices.java.userserver.repository.UserDetailedRepository;
 import group.practices.java.userserver.repository.UserRepository;
 import group.practices.java.userserver.repository.entitys.UserData;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,6 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private UserDetailedRepository userDetailedRepository;
 
@@ -49,11 +52,11 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .build();
     }
 
-    public CustomResponse register( UserData user) {
+
+    public CustomResponse register(UserData user) {
         if (!user.getPassword().equals(user.getPassword_confirm())){
             return new CustomResponse(HttpServletResponse.SC_BAD_REQUEST, "两次输入的密码不一致", null);
         }
-
         try {
             userRepository.save(user);
             userDetailedRepository.save(new UserDetailedData(user.getUsername(), user.getName()));

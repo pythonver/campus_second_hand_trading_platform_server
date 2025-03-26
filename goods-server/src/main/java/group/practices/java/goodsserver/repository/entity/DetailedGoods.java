@@ -35,7 +35,7 @@ public class DetailedGoods {
 
     @Field(name = "real_wap_price")
     @NotEmpty
-    private Integer presetsPrice = 9999; // 预设价格
+    private Float presetsPrice = 9999F; // 预设价格
 
     @Field(name = "good_desc")
     private String goodDescription; // 商品描述
@@ -52,7 +52,7 @@ public class DetailedGoods {
     @NotEmpty
     private Long inventory_quantity = 0L;
     // 库存状态
-    @Field(name = "inventory_quantity")
+    @Field(name = "inventory_type")
     private Short inventory_type ;
     // 主图
 

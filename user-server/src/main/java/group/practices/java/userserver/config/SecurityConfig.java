@@ -1,5 +1,7 @@
 package group.practices.java.userserver.config;
 
+import group.practices.java.userserver.service.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,6 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.RememberMeServices;
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
 
 /**
  * description: Describe the feature.
@@ -23,6 +27,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
+
 
     // 自定义认证条件
     @Bean("customSecurityFilterChain")
@@ -35,6 +43,13 @@ public class SecurityConfig {
                 formLogin.loginPage("/login").permitAll() // 允许所有人访问
                         .defaultSuccessUrl("/hello")) // 登陆成功后重定向至主页
                 .logout(LogoutConfigurer::permitAll) // 允许注销
+                .rememberMe(rememberMe -> {
+                    rememberMe.key("user-remember-me-key"); // 安全秘钥
+                    rememberMe.tokenValiditySeconds(24 * 60 * 60 * 14); // 记住14天
+                    rememberMe.rememberMeParameter("remember-me");
+                    rememberMe.rememberMeCookieName("remember-me");
+                    rememberMe.userDetailsService(userDetailsService);
+                })
                 .csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
