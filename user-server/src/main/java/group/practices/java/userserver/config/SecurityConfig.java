@@ -1,22 +1,23 @@
 package group.practices.java.userserver.config;
 
+import group.practices.java.userserver.filter.JwtAuthenticationFilter;
 import group.practices.java.userserver.service.CustomUserDetailsService;
+import group.practices.java.userserver.util.JwtAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.RememberMeServices;
-import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * description: Describe the feature.
@@ -29,32 +30,39 @@ import org.springframework.security.web.authentication.rememberme.TokenBasedReme
 public class SecurityConfig {
 
     @Autowired
-    private CustomUserDetailsService userDetailsService;
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    // 配置密码编码器
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
 
-    // 自定义认证条件
-    @Bean("customSecurityFilterChain")
-    public SecurityFilterChain springSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(request ->
-                request.requestMatchers("/home", "/register", "/login", "/logout")
-                        .permitAll() // 允许所有人访问的路径
-                        .anyRequest().authenticated() // 其他路径需要认证
-        ).formLogin(formLogin ->
-                formLogin.loginPage("/login").permitAll() // 允许所有人访问
-                        .defaultSuccessUrl("/hello")) // 登陆成功后重定向至主页
-                .logout(LogoutConfigurer::permitAll) // 允许注销
-                .rememberMe(rememberMe -> {
-                    rememberMe.key("user-remember-me-key"); // 安全秘钥
-                    rememberMe.tokenValiditySeconds(24 * 60 * 60 * 14); // 记住14天
-                    rememberMe.rememberMeParameter("remember-me");
-                    rememberMe.rememberMeCookieName("remember-me");
-                    rememberMe.userDetailsService(userDetailsService);
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        http.csrf( AbstractHttpConfigurer::disable)
+                .sessionManagement( session -> session.sessionCreationPolicy( SessionCreationPolicy.STATELESS))
+                .exceptionHandling( exception ->
+                        exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .authorizeHttpRequests(authorities -> {
+                    authorities.requestMatchers("/home/**", "/login", "/logout", "/register").permitAll();
+                    authorities.anyRequest().authenticated();
                 })
-                .csrf(AbstractHttpConfigurer::disable);
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
 
-
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
 }
 

@@ -1,10 +1,15 @@
 package group.practices.java.userserver.controller;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
+import group.practices.java.userserver.body.RegisterRequest;
 import group.practices.java.userserver.repository.UserDetailedRepository;
 import group.practices.java.userserver.repository.entitys.UserData;
 import group.practices.java.userserver.repository.entitys.UserDetailedData;
 import group.practices.java.userserver.service.CustomResponse;
 import group.practices.java.userserver.service.CustomUserDetailsService;
+import group.practices.java.userserver.service.RegisterService;
+import group.practices.java.userserver.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -17,6 +22,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
+import java.util.Optional;
+
 /**
  * description: Describe the feature.
  * date: 2025/3/21
@@ -27,35 +35,33 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class UserController {
 
+
     @Autowired
-    UserDetailedRepository userDetailedRepository;
+    RegisterService registerService;
     @Autowired
-    CustomUserDetailsService customUserDetailsService;
+    UserService userService;
+
 
     @GetMapping("/get-user-data")
-    public UserDetailedData getUserData(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<UserDetailedData> getUserData(HttpServletRequest request) {
+        log.info("get-user-data: {}", request.getHeader("Authorization"));
+
         // 获取用户名
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return userService.getUserData(request)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound()
+                        .location(URI.create("/login"))// 重定向
+                        .build());
 
-        String username = auth.getName();
-        log.info("login information, username：{}", username);
-        UserDetailedData userDetailedData = userDetailedRepository.findByCampusId(username);
-        System.out.println(userDetailedData);
-        if (userDetailedData == null) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-
-        }else {
-            response.setStatus(HttpServletResponse.SC_OK);
-        }
-
-        return userDetailedData;
     }
 
     @Valid
     @PostMapping("/register")
-    public ResponseEntity<CustomResponse> register( UserData userData) {
+    public ResponseEntity<CustomResponse> register(RegisterRequest userData) {
         log.info("register user: {}", userData);
-        CustomResponse result = customUserDetailsService.register( userData);
+        CustomResponse result = registerService.register( userData);
         return ResponseEntity.status(result.getStatus()).body(result);
     }
+
+
 }

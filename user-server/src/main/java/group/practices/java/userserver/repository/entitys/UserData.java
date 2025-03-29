@@ -1,11 +1,12 @@
 package group.practices.java.userserver.repository.entitys;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 
 /**
  * description: Describe the feature.
@@ -21,23 +22,16 @@ public class UserData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Transient // 不映射
-    private String name;
-
     @Column(name = "campus_id", unique = true)
-    @NotEmpty(message = "学号不可为空")
-    @Size(max = 16, message = "学号最大16位")
     private String username;
 
     @Column(name = "password")
-    @NotEmpty(message = "密码不可为空")
-    @Size(min = 8, max = 16, message = "密码至少8位，至多16位")
     private String password;
 
-    @Transient // 不映射
-    private String password_confirm;
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "user_role",
+        joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "campus_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
+    private Set<Role> roles;
 
-
-    @Column(name = "role")
-    private String role = "ROLE_USER";
 }
